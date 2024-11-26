@@ -48,13 +48,12 @@ class Perceptron(LinearModel):
         """
         # Q1.1 a
         # calculate prediction
-        scores = np.dot(self.W, x_i)
-        y_pred = scores.argmax()
+        predicted_label = self.predict(x_i)
 
         # if prediction is incorrect
-        if y_pred != y_i:
+        if predicted_label != y_i:
             self.W[y_i] += x_i  # increase weight of gold class
-            self.W[y_pred] -= x_i  # decrease weight of incorrect class
+            self.W[predicted_label] -= x_i  # decrease weight of incorrect class
 
         return
 
@@ -67,20 +66,11 @@ class LogisticRegression(LinearModel):
         learning_rate (float): keep it at the default value for your plots
         """
         # Q1.2 (a,b)
-        print('x_i:', x_i)
-        print(x_i.shape)
-        print('y_i:', y_i)
-        print(y_i.shape)
-        print('W:', self.W)
-        print(self.W.shape)
-        exit()
-        Z_x = np.sum(np.exp(np.dot(self.W, x_i)))
-        P_w = np.exp(np.dot(self.W[y_i], x_i)) / Z_x
-
-        e_y = np.zeros(self.n_classes) # one-hot encoding
-        e_y[y_i] = 1 # true class
-
-        self.W += learning_rate * (np.dot(e_y - P_w, x_i)) # acho q continua errado
+        scores = np.dot(self.W, x_i)
+        P = np.exp(scores) / np.sum(np.exp(scores))
+        P[y_i] -= 1  # subtract 1 from the probability of the correct class
+        gradient = np.outer(P, x_i)  # compute the gradient
+        self.W -= learning_rate * gradient + l2_penalty * self.W  # update weights with L2 regularization
 
         return
 
