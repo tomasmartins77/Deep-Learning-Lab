@@ -67,9 +67,13 @@ class LogisticRegression(LinearModel):
         """
         # Q1.2 (a,b)
         scores = np.dot(self.W, x_i)
-        P = np.exp(scores) / np.sum(np.exp(scores))
+        
+        exp_scores = np.exp(scores - np.max(scores))
+        P = exp_scores / np.sum(exp_scores)  # compute the probabilities
+
         P[y_i] -= 1  # subtract 1 from the probability of the correct class
         gradient = np.outer(P, x_i)  # compute the gradient
+        
         self.W -= learning_rate * gradient + l2_penalty * self.W  # update weights with L2 regularization
 
         return
