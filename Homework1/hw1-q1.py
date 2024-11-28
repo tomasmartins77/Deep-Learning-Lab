@@ -66,16 +66,15 @@ class LogisticRegression(LinearModel):
         learning_rate (float): keep it at the default value for your plots
         """
         # Q1.2 (a,b)
-        scores = np.dot(self.W, x_i)
+        scores = self.W @ x_i  # compute the scores
         
-        exp_scores = np.exp(scores - np.max(scores))
-        P = exp_scores / np.sum(exp_scores)  # compute the probabilities
+        exp_scores = np.exp(scores)
+        P_w = exp_scores / np.sum(exp_scores)  # compute the probabilities
 
-        P[y_i] -= 1  # subtract 1 from the probability of the correct class
-        gradient = np.outer(P, x_i)  # compute the gradient
+        e_y = np.zeros(self.W.shape[0])
+        e_y[y_i] = 1
         
-        self.W -= learning_rate * gradient + l2_penalty * self.W  # update weights with L2 regularization
-
+        self.W += learning_rate * (np.outer(e_y - P_w, x_i) - l2_penalty * self.W)   # update the weights
         return
 
 class MLP(object):
