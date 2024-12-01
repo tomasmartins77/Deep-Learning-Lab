@@ -30,6 +30,8 @@ class LogisticRegression(nn.Module):
         # In a pytorch module, the declarations of layers needs to come after
         # the super __init__ line, otherwise the magic doesn't work.
 
+        self.layer = nn.Linear(n_features, n_classes)
+
     def forward(self, x, **kwargs):
         """
         x (batch_size x n_features): a batch of training examples
@@ -44,7 +46,7 @@ class LogisticRegression(nn.Module):
         forward pass -- this is enough for it to figure out how to do the
         backward pass.
         """
-        raise NotImplementedError
+        return self.layer(x)
 
 
 class FeedforwardNetwork(nn.Module):
@@ -64,7 +66,15 @@ class FeedforwardNetwork(nn.Module):
         includes modules for several activation functions and dropout as well.
         """
         super().__init__()
-        # Implement me!
+        model = nn.sequential()
+        for i in range(layers):
+            if i == 0:
+                model.add_module(f"layer{i}", nn.Linear(n_features, hidden_size))
+            else:
+                model.add_module(f"layer{i}", nn.Linear(hidden_size, hidden_size))
+            
+            model.add_module(f"activation{i}", nn.ReLU())
+            model.add_module(f"dropout{i}", nn.Dropout(dropout))
         raise NotImplementedError
 
     def forward(self, x, **kwargs):
@@ -96,7 +106,12 @@ def train_batch(X, y, model, optimizer, criterion, **kwargs):
     This function should return the loss (tip: call loss.item()) to get the
     loss as a numerical value that is not part of the computation graph.
     """
-    raise NotImplementedError
+    optimizer.zero_grad()
+    outputs = model(X)
+    loss = criterion(outputs, y)
+    loss.backward()
+    optimizer.step()
+    return loss.item()
 
 
 def predict(model, X):
