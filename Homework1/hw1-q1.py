@@ -80,11 +80,21 @@ class LogisticRegression(LinearModel):
 class MLP(object):
     def __init__(self, n_classes, n_features, hidden_size):
         # Initialize an MLP with a single hidden layer.
-        raise NotImplementedError # Q1.3 (a)
+        self.n_classes = n_classes
+        self.units = [n_features,  hidden_size, n_classes]
+
+        self.W = [np.random.normal(loc=0.1, scale=0.1, size=(
+            self.units[i+1], self.units[i])) for i in range(0, len(self.units)-1)]
+        
+        self.B = [np.zeros(self.units[i+1])
+                  for i in range(0, len(self.units)-1)]
+        # copiado
 
     def predict(self, X):
         # Compute the forward pass of the network. At prediction time, there is
         # no need to save the values of hidden nodes.
+        # Q1.3 (a)
+        
         raise NotImplementedError # Q1.3 (a)
 
     def evaluate(self, X, y):
@@ -102,7 +112,8 @@ class MLP(object):
         """
         Dont forget to return the loss of the epoch.
         """
-        raise NotImplementedError # Q1.3 (a)
+        # Q1.3 (b)
+        raise NotImplementedError
 
 
 def plot(epochs, train_accs, val_accs, filename=None):

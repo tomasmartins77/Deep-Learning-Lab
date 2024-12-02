@@ -66,16 +66,17 @@ class FeedforwardNetwork(nn.Module):
         includes modules for several activation functions and dropout as well.
         """
         super().__init__()
-        model = nn.sequential()
-        for i in range(layers):
+        self.model = nn.Sequential()
+        for i in range(0, layers + 1):
             if i == 0:
-                model.add_module(f"layer{i}", nn.Linear(n_features, hidden_size))
+                self.model.add_module(f"layer{i}", nn.Linear(n_features, hidden_size))
             else:
-                model.add_module(f"layer{i}", nn.Linear(hidden_size, hidden_size))
+                self.model.add_module(f"layer{i}", nn.Linear(hidden_size, hidden_size))
             
-            model.add_module(f"activation{i}", nn.ReLU())
-            model.add_module(f"dropout{i}", nn.Dropout(dropout))
-        raise NotImplementedError
+            self.model.add_module(f"activation{i}", nn.ReLU())
+            self.model.add_module(f"dropout{i}", nn.Dropout(dropout))
+
+        self.model.add_module(f"layer{layers}", nn.Linear(hidden_size, n_classes))
 
     def forward(self, x, **kwargs):
         """
@@ -85,8 +86,10 @@ class FeedforwardNetwork(nn.Module):
         the output logits from x. This will include using various hidden
         layers, pointwise nonlinear functions, and dropout.
         """
-        raise NotImplementedError
-
+        for layer in self.model:
+            x = layer(x)
+        return x
+    
 
 def train_batch(X, y, model, optimizer, criterion, **kwargs):
     """
