@@ -158,6 +158,9 @@ def plot(epochs, plottables, filename=None, ylim=None):
 
 
 def main():
+    my_device = torch.device("cuda:0" if torch.cuda.is_available() else "cpu")
+    print("my_device:", my_device)
+    
     parser = argparse.ArgumentParser()
     parser.add_argument('model',
                         choices=['logistic_regression', 'mlp'],
