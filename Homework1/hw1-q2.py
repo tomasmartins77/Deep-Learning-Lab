@@ -66,18 +66,33 @@ class FeedforwardNetwork(nn.Module):
         includes modules for several activation functions and dropout as well.
         """
         super().__init__()
-        self.model = nn.Sequential()
-        for i in range(0, layers + 1):
-            if i == 0:
-                self.model.add_module(f"layer{i}", nn.Linear(n_features, hidden_size))
-            else:
-                self.model.add_module(f"layer{i}", nn.Linear(hidden_size, hidden_size))
-            
-            self.model.add_module(f"activation{i}", nn.ReLU())
-            self.model.add_module(f"dropout{i}", nn.Dropout(dropout))
+        # Define activation function
+        if activation_type == 'relu':
+            activation = nn.ReLU()
+        elif activation_type == 'tanh':
+            activation = nn.Tanh()
+        else:
+            raise ValueError(f"Unsupported activation type: {activation_type}")
 
-        self.model.add_module(f"layer{layers}", nn.Linear(hidden_size, n_classes))
+        # Build the network layers
+        layers_list = []
 
+        # Input layer
+        layers_list.append(nn.Linear(n_features, hidden_size))
+        layers_list.append(activation)
+        layers_list.append(nn.Dropout(dropout))
+
+        # Hidden layers
+        for _ in range(layers - 1):
+            layers_list.append(nn.Linear(hidden_size, hidden_size))
+            layers_list.append(activation)
+            layers_list.append(nn.Dropout(dropout))
+
+        # Output layer
+        layers_list.append(nn.Linear(hidden_size, n_classes))
+
+        self.model = nn.Sequential(*layers_list)
+        
     def forward(self, x, **kwargs):
         """
         x (batch_size x n_features): a batch of training examples
@@ -86,9 +101,8 @@ class FeedforwardNetwork(nn.Module):
         the output logits from x. This will include using various hidden
         layers, pointwise nonlinear functions, and dropout.
         """
-        for layer in self.model:
-            x = layer(x)
-        return x
+        
+        return self.model(x)
     
 
 def train_batch(X, y, model, optimizer, criterion, **kwargs):

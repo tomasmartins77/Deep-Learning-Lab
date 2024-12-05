@@ -10,7 +10,6 @@ import matplotlib.pyplot as plt
 import time
 import utils
 
-
 class LinearModel(object):
     def __init__(self, n_classes, n_features, **kwargs):
         self.W = np.zeros((n_classes, n_features))
@@ -88,14 +87,29 @@ class MLP(object):
         
         self.B = [np.zeros(self.units[i+1])
                   for i in range(0, len(self.units)-1)]
-        # copiado
+
+    def relu(self, x):
+        """ReLU activation function."""
+        return np.maximum(0, x)
+
+    def softmax(self, x):
+        """Softmax function for output probabilities."""
+        exp_x = np.exp(x - np.max(x, axis=1, keepdims=True))  # Stability trick
+        return exp_x / np.sum(exp_x, axis=1, keepdims=True)
+
 
     def predict(self, X):
         # Compute the forward pass of the network. At prediction time, there is
         # no need to save the values of hidden nodes.
         # Q1.3 (a)
-        
-        raise NotImplementedError # Q1.3 (a)
+        z1 = np.dot(X, self.W[0].T) + self.B[0] # Hidden layer pre-activation
+        a1 = self.relu(z1) # Hidden layer ReLU activation
+
+        z2 = np.dot(a1, self.W[1].T) + self.B[1] # Output layer pre-activation
+        probabilities = self.softmax(z2) # Output layer Softmax activation
+
+        return np.argmax(probabilities, axis=1) # Predicted class label
+
 
     def evaluate(self, X, y):
         """
@@ -113,7 +127,44 @@ class MLP(object):
         Dont forget to return the loss of the epoch.
         """
         # Q1.3 (b)
-        raise NotImplementedError
+
+        total_loss = 0
+        n_examples = X.shape[0]
+
+        for i in range(n_examples):
+            # Forward pass
+            x_i = X[i:i+1]  # Single example (1, n_features)
+            z1 = np.dot(x_i, self.W[0].T) + self.B[0]  # Hidden layer pre-activation
+            a1 = self.relu(z1)  # Hidden layer ReLU activation
+
+            z2 = np.dot(a1, self.W[1].T) + self.B[1]   # Output layer pre-activation
+            probabilities = self.softmax(z2)  # Output layer Softmax activation
+
+            # Compute loss (cross-entropy)
+            target = np.zeros(self.n_classes)
+            target[y[i]] = 1
+            loss = -np.sum(target @ np.log(probabilities))
+            total_loss += loss
+
+            # Backward pass
+            # Output layer
+            grad_z2 = probabilities - target  # Gradient of loss w.r.t z2
+            grad_w2 = np.dot(grad_z2.T, a1)  # Gradient of loss w.r.t W2
+            grad_b2 = grad_z2  # Gradient of loss w.r.t B2
+
+            # Hidden layer
+            grad_a1 = np.dot(grad_z2, self.W[1])  # Gradient of loss w.r.t a1
+            grad_z1 = grad_a1 * (z1 > 0)  # Backprop through ReLU
+            grad_w1 = np.dot(grad_z1.T, x_i)  # Gradient of loss w.r.t W1
+            grad_b1 = grad_z1  # Gradient of loss w.r.t B1
+
+            # Update weights and biases
+            self.W[1] -= learning_rate * grad_w2
+            self.B[1] -= learning_rate * grad_b2.mean(axis=0)   
+            self.W[0] -= learning_rate * grad_w1
+            self.B[0] -= learning_rate * grad_b1.mean(axis=0)
+
+        return total_loss / n_examples
 
 
 def plot(epochs, train_accs, val_accs, filename=None):
