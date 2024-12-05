@@ -203,8 +203,8 @@ def main():
     dataset = utils.ClassificationDataset(data)
     train_dataloader = DataLoader(
         dataset, batch_size=opt.batch_size, shuffle=True, generator=torch.Generator().manual_seed(42))
-    dev_X, dev_y = dataset.dev_X, dataset.dev_y
-    test_X, test_y = dataset.test_X, dataset.test_y
+    dev_X, dev_y = dataset.dev_X.to(my_device), dataset.dev_y.to(my_device)
+    test_X, test_y = dataset.test_X.to(my_device), dataset.test_y.to(my_device)
 
     n_classes = torch.unique(dataset.y).shape[0]  # 10
     n_feats = dataset.X.shape[1]
@@ -221,6 +221,7 @@ def main():
             opt.activation,
             opt.dropout
         )
+    model = model.to(my_device)
 
     # get an optimizer
     optims = {"adam": torch.optim.Adam, "sgd": torch.optim.SGD}
@@ -247,6 +248,7 @@ def main():
         print('Training epoch {}'.format(ii))
         epoch_train_losses = []
         for X_batch, y_batch in train_dataloader:
+            X_batch, y_batch = X_batch.to(my_device), y_batch.to(my_device)
             loss = train_batch(
                 X_batch, y_batch, model, optimizer, criterion)
             epoch_train_losses.append(loss)

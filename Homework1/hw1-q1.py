@@ -143,7 +143,8 @@ class MLP(object):
             # Compute loss (cross-entropy)
             target = np.zeros(self.n_classes)
             target[y[i]] = 1
-            loss = -np.sum(target @ np.log(probabilities))
+            loss = -target @ np.log(probabilities.T + 1e-8)  # Cross-entropy loss
+            loss = np.sum(loss)
             total_loss += loss
 
             # Backward pass
