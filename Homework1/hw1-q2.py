@@ -80,7 +80,6 @@ class FeedforwardNetwork(nn.Module):
         # Input layer
         layers_list.append(nn.Linear(n_features, hidden_size))
         layers_list.append(activation)
-        layers_list.append(nn.Dropout(dropout))
 
         # Hidden layers
         for _ in range(layers - 1):
