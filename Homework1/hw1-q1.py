@@ -149,15 +149,15 @@ class MLP(object):
 
             # Backward pass
             # Output layer
-            grad_z2 = probabilities - target  # Gradient of loss w.r.t z2
-            grad_w2 = np.dot(grad_z2.T, a1)  # Gradient of loss w.r.t W2
-            grad_b2 = grad_z2  # Gradient of loss w.r.t B2
+            grad_z2 = probabilities - target  # Gradient of loss z2
+            grad_w2 = np.dot(grad_z2.T, a1)  # Gradient of loss W2
+            grad_b2 = grad_z2  # Gradient of loss B2
 
             # Hidden layer
-            grad_a1 = np.dot(grad_z2, self.W[1])  # Gradient of loss w.r.t a1
+            grad_a1 = np.dot(grad_z2, self.W[1])  # Gradient of loss a1
             grad_z1 = grad_a1 * (z1 > 0)  # Backprop through ReLU
-            grad_w1 = np.dot(grad_z1.T, x_i)  # Gradient of loss w.r.t W1
-            grad_b1 = grad_z1  # Gradient of loss w.r.t B1
+            grad_w1 = np.dot(grad_z1.T, x_i)  # Gradient of loss W1
+            grad_b1 = grad_z1  # Gradient of loss B1
 
             # Update weights and biases
             self.W[1] -= learning_rate * grad_w2
