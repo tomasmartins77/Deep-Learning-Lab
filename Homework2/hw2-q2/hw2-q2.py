@@ -19,27 +19,34 @@ class ConvBlock(nn.Module):
             self,
             in_channels,
             out_channels,
-            kernel_size,
-            padding=None,
+            kernel_size=3,
+            padding=1,
             maxpool=True,
             batch_norm=True,
-            dropout=0.0
+            dropout=0.1
         ):
         super().__init__()
 
         # Q2.1. Initialize convolution, maxpool, activation and dropout layers 
-        
+        self.conv = nn.Conv2d(in_channels, out_channels, kernel_size=kernel_size, padding=padding, stride=1)
+        self.activation = nn.ReLU()
+        self.maxpool = nn.MaxPool2d(kernel_size=2, stride=2) if maxpool else nn.AvgPool2d(kernel_size=2, stride=2)
+        self.dropout = nn.Dropout(dropout) if dropout > 0 else nn.Identity()
         
         # Q2.2 Initialize batchnorm layer 
-        
-        raise NotImplementedError
+        self.batch_norm = nn.BatchNorm2d(out_channels) if batch_norm else nn.Identity()
 
     def forward(self, x):
         # input for convolution is [b, c, w, h]
-        
-        # Implement execution of layers in right order
 
-        raise NotImplementedError
+        # Implement execution of layers in right order
+        x = self.conv(x)
+        x = self.batch_norm(x)
+        x = self.activation(x)
+        x = self.maxpool(x)
+        x = self.dropout(x)
+
+        return x
 
 
 class CNN(nn.Module):
@@ -52,22 +59,46 @@ class CNN(nn.Module):
         self.batch_norm = batch_norm
 
         # Initialize convolutional blocks
+        self.conv_blocks = nn.Sequential()
+        for i in range(len(channels) - 1):
+            self.conv_blocks.add_module(
+                'conv_block_%d' % i,
+                ConvBlock(
+                    channels[i], channels[i + 1],
+                    maxpool=maxpool,
+                    batch_norm=batch_norm,
+                    dropout=dropout_prob
+                )
+            )
         
+        # Flatten output of the last conv block or apply global average pooling
+        self.GlobalAvgPool = nn.AdaptiveAvgPool2d((1, 1)) if batch_norm else nn.Identity()
+        self.flatten = nn.Flatten()
+
         # Initialize layers for the MLP block
+        self.fc1 = nn.Linear(128, fc1_out_dim) if batch_norm else nn.Linear(128 * 6 * 6, fc1_out_dim)
+        self.activation = nn.ReLU()
+        self.dropout = nn.Dropout(dropout_prob)
+        self.fc2 = nn.Linear(fc1_out_dim, fc2_out_dim)
+        self.fc3 = nn.Linear(fc2_out_dim, 6)
+        
         # For Q2.2 initalize batch normalization
+        self.batch_norm = nn.BatchNorm1d(fc1_out_dim) if batch_norm else nn.Identity()
         
 
     def forward(self, x):
         x = x.reshape(x.shape[0], 3, 48, -1)
-
-        # Implement execution of convolutional blocks 
-        
-        # Flattent output of the last conv block
-        
-        # Implement MLP part
-        
-        # For Q2.2 implement global averag pooling
-        
+        for conv_block in self.conv_blocks:
+            x = conv_block(x) 
+        x = self.GlobalAvgPool(x)
+        x = self.flatten(x)
+        x = self.fc1(x)
+        x = self.activation(x)
+        x = self.batch_norm(x)
+        x = self.dropout(x)
+        x = self.fc2(x)
+        x = self.activation(x)
+        x = self.fc3(x)    
 
         return F.log_softmax(x, dim=1)
  
@@ -123,7 +154,7 @@ def plot(epochs, plottable, ylabel='', name=''):
 
 
 def get_number_trainable_params(model):
-    raise NotImplementedError
+    return sum(p.numel() for p in model.parameters() if p.requires_grad)
 
 
 def plot_file_name_sufix(opt, exlude):
@@ -150,8 +181,8 @@ def main():
                         choices=['sgd', 'adam'], default='sgd')
     parser.add_argument('-no_maxpool', action='store_true')
     parser.add_argument('-no_batch_norm', action='store_true')
-    parser.add_argument('-data_path', type=str, default='intel_landscapes.v2.npz',)
-    parser.add_argument('-device', choices=['cpu', 'cuda', 'mps'], default='cpu')
+    parser.add_argument('-data_path', type=str, default='intel_landscapes.npz',)
+    parser.add_argument('-device', choices=['cpu', 'cuda', 'mps'], default='cuda')
 
     opt = parser.parse_args()
 
@@ -172,7 +203,9 @@ def main():
         maxpool=not opt.no_maxpool,
         batch_norm=not opt.no_batch_norm
     ).to(opt.device)
-
+    
+    print(model)
+    
     # get an optimizer
     optims = {"adam": torch.optim.Adam, "sgd": torch.optim.SGD}
 
