@@ -181,7 +181,7 @@ def main():
                         choices=['sgd', 'adam'], default='sgd')
     parser.add_argument('-no_maxpool', action='store_true')
     parser.add_argument('-no_batch_norm', action='store_true')
-    parser.add_argument('-data_path', type=str, default='intel_landscapes.npz',)
+    parser.add_argument('-data_path', type=str, default='intel_landscapes.v2.npz',)
     parser.add_argument('-device', choices=['cpu', 'cuda', 'mps'], default='cuda')
 
     opt = parser.parse_args()
